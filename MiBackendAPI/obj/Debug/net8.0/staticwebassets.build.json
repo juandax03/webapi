@@ -1,0 +1,11 @@
+{
+  "Version": 1,
+  "Hash": "bTDyUCkMKBdGLedtvYO3VBkemILSy1EQRLoX3E+phlY=",
+  "Source": "MiBackendAPI",
+  "BasePath": "_content/MiBackendAPI",
+  "Mode": "Default",
+  "ManifestType": "Build",
+  "ReferencedProjectsConfiguration": [],
+  "DiscoveryPatterns": [],
+  "Assets": []
+}

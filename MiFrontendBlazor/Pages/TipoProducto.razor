@@ -1,0 +1,120 @@
+@page "/tipo-producto"
+@using MiFrontendBlazor.Models
+
+@inject HttpClient Http
+<h3>Gestión de Tipos de Producto</h3>
+
+<button @onclick="ShowCreateForm">Crear Nuevo Tipo de Producto</button>
+
+@if (showForm)
+{
+    <EditForm Model="productoSeleccionado" OnValidSubmit="HandleSubmit">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+
+        <div>
+            <label for="categoria">Categoría:</label>
+            <InputText id="categoria" @bind-Value="productoSeleccionado.Categoria" />
+        </div>
+        <div>
+            <label for="clase">Clase:</label>
+            <InputText id="clase" @bind-Value="productoSeleccionado.Clase" />
+        </div>
+        <div>
+            <label for="nombre">Nombre:</label>
+            <InputText id="nombre" @bind-Value="productoSeleccionado.Nombre" />
+        </div>
+        <div>
+            <label for="tipologia">Tipología:</label>
+            <InputText id="tipologia" @bind-Value="productoSeleccionado.Tipologia" />
+        </div>
+
+        <button type="submit">Guardar</button>
+        <button @onclick="Cancelar">Cancelar</button>
+    </EditForm>
+}
+
+@if (productos != null)
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Categoría</th>
+                <th>Clase</th>
+                <th>Nombre</th>
+                <th>Tipología</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var producto in productos)
+            {
+                <tr>
+                    <td>@producto.Id</td>
+                    <td>@producto.Categoria</td>
+                    <td>@producto.Clase</td>
+                    <td>@producto.Nombre</td>
+                    <td>@producto.Tipologia</td>
+                    <td>
+                        <button @onclick="() => EditProducto(producto)">Editar</button>
+                        <button @onclick="() => DeleteProducto(producto.Id)">Eliminar</button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private List<TipoProductoModel> productos;
+    private TipoProductoModel productoSeleccionado = new TipoProductoModel();
+    private bool showForm = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        productos = await Http.GetFromJsonAsync<List<TipoProductoModel>>("api/tipoproducto");
+    }
+
+    private void ShowCreateForm()
+    {
+        productoSeleccionado = new TipoProductoModel(); // Limpiar el formulario
+        showForm = true;
+    }
+
+    private void EditProducto(TipoProductoModel producto)
+    {
+        productoSeleccionado = producto;
+        showForm = true;
+    }
+
+    private async Task HandleSubmit()
+    {
+        if (productoSeleccionado.Id == 0)
+        {
+            // Crear nuevo producto
+            await Http.PostAsJsonAsync("api/tipoproducto", productoSeleccionado);
+        }
+        else
+        {
+            // Actualizar producto existente
+            await Http.PutAsJsonAsync($"api/tipoproducto/{productoSeleccionado.Id}", productoSeleccionado);
+        }
+
+        productos = await Http.GetFromJsonAsync<List<TipoProductoModel>>("api/tipoproducto");
+        showForm = false;
+    }
+
+    private async Task DeleteProducto(int id)
+    {
+        await Http.DeleteAsync($"api/tipoproducto/{id}");
+        productos = await Http.GetFromJsonAsync<List<TipoProductoModel>>("api/tipoproducto");
+    }
+
+    private void Cancelar()
+    {
+        showForm = false;
+    }
+
+
+}

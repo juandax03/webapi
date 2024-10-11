@@ -1,0 +1,108 @@
+@page "/termino-clave"
+@using MiFrontendBlazor.Models
+
+
+@inject HttpClient Http
+<h3>Gestión de Término Clave</h3>
+
+<button @onclick="ShowCreateForm">Crear Nuevo Término Clave</button>
+
+@if (showForm)
+{
+    <EditForm Model="terminoSeleccionado" OnValidSubmit="HandleSubmit">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+
+        <div>
+            <label for="termino">Término:</label>
+            <InputText id="termino" @bind-Value="terminoSeleccionado.termino" />
+        </div>
+        <div>
+            <label for="termino_ingles">Término en Inglés:</label>
+            <InputText id="termino_ingles" @bind-Value="terminoSeleccionado.termino_ingles" />
+        </div>
+
+        <button type="submit">Guardar</button>
+        <button @onclick="Cancelar">Cancelar</button>
+    </EditForm>
+}
+
+@if (terminos != null)
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Término</th>
+                <th>Término en Inglés</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var termino in terminos)
+            {
+                <tr>
+                    <td>@termino.termino</td>
+                    <td>@termino.termino_ingles</td>
+                    <td>
+                        <button @onclick="() => EditTermino(termino)">Editar</button>
+                        <button @onclick="() => DeleteTermino(termino.termino)">Eliminar</button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private List<TerminoClaveModel> terminos;
+    private TerminoClaveModel terminoSeleccionado = new TerminoClaveModel();
+    private bool showForm = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        terminos = await Http.GetFromJsonAsync<List<TerminoClaveModel>>("api/terminoclave");
+    }
+
+   private bool isCreating = false; // Agregamos esta propiedad
+
+private void ShowCreateForm()
+{
+    terminoSeleccionado = new TerminoClaveModel(); // Limpia el objeto completamente
+    isCreating = true; // Estamos en modo creación
+    showForm = true;
+}
+
+private void EditTermino(TerminoClaveModel termino)
+{
+    terminoSeleccionado = termino;
+    isCreating = false; // Estamos en modo edición
+    showForm = true;
+}
+
+private async Task HandleSubmit()
+{
+    if (isCreating)
+    {
+        // Crear nuevo término
+        await Http.PostAsJsonAsync("api/terminoclave", terminoSeleccionado);
+    }
+    else
+    {
+        // Actualizar término existente
+        await Http.PutAsJsonAsync($"api/terminoclave/{terminoSeleccionado.termino}", terminoSeleccionado);
+    }
+
+    terminos = await Http.GetFromJsonAsync<List<TerminoClaveModel>>("api/terminoclave");
+    showForm = false;
+}
+    private async Task DeleteTermino(string termino)
+    {
+        await Http.DeleteAsync($"api/terminoclave/{termino}");
+        terminos = await Http.GetFromJsonAsync<List<TerminoClaveModel>>("api/terminoclave");
+    }
+
+    private void Cancelar()
+    {
+        showForm = false;
+    }
+}

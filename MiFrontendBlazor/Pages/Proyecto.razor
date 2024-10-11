@@ -1,0 +1,137 @@
+@page "/proyecto"
+@using MiFrontendBlazor.Models
+@inject HttpClient Http
+
+<h3>Gestión de Proyectos</h3>
+
+<button @onclick="ShowCreateForm">Crear Nuevo Proyecto</button>
+
+@if (showForm)
+{
+    <EditForm Model="proyectoSeleccionado" OnValidSubmit="HandleSubmit">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+
+        <div>
+            <label for="titulo">Título:</label>
+            <InputText id="titulo" @bind-Value="proyectoSeleccionado.titulo" />
+        </div>
+        <div>
+            <label for="resumen">Resumen:</label>
+            <InputText id="resumen" @bind-Value="proyectoSeleccionado.resumen" />
+        </div>
+        <div>
+            <label for="presupuesto">Presupuesto:</label>
+            <InputNumber id="presupuesto" @bind-Value="proyectoSeleccionado.presupuesto" />
+        </div>
+        <div>
+            <label for="tipoFinanciacion">Tipo de Financiación:</label>
+            <InputText id="tipoFinanciacion" @bind-Value="proyectoSeleccionado.tipo_financiacion" />
+        </div>
+        <div>
+            <label for="tipoFondos">Tipo de Fondos:</label>
+            <InputText id="tipoFondos" @bind-Value="proyectoSeleccionado.tipo_fondos" />
+        </div>
+        <div>
+            <label for="fechaInicio">Fecha de Inicio:</label>
+            <InputDate id="fechaInicio" @bind-Value="proyectoSeleccionado.fecha_inicio" />
+        </div>
+        <div>
+            <label for="fechaFin">Fecha de Fin:</label>
+            <InputDate id="fechaFin" @bind-Value="proyectoSeleccionado.fecha_fin" />
+        </div>
+
+        <button type="submit">Guardar</button>
+        <button @onclick="Cancelar">Cancelar</button>
+    </EditForm>
+}
+
+@if (proyectos != null)
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Título</th>
+                <th>Resumen</th>
+                <th>Presupuesto</th>
+                <th>Tipo de Financiación</th>
+                <th>Tipo de Fondos</th>
+                <th>Fecha de Inicio</th>
+                <th>Fecha de Fin</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var proyecto in proyectos)
+            {
+                <tr>
+                    <td>@proyecto.id</td>
+                    <td>@proyecto.titulo</td>
+                    <td>@proyecto.resumen</td>
+                    <td>@proyecto.presupuesto</td>
+                    <td>@proyecto.tipo_financiacion</td>
+                    <td>@proyecto.tipo_fondos</td>
+                    <td>@proyecto.fecha_inicio.ToShortDateString()</td>
+                    <td>@proyecto.fecha_fin?.ToShortDateString()</td>
+                    <td>
+                        <button @onclick="() => EditProyecto(proyecto)">Editar</button>
+                        <button @onclick="() => DeleteProyecto(proyecto.id)">Eliminar</button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private List<ProyectoModel> proyectos;
+    private ProyectoModel proyectoSeleccionado = new ProyectoModel();
+    private bool showForm = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        proyectos = await Http.GetFromJsonAsync<List<ProyectoModel>>("api/proyecto");
+    }
+
+    private void ShowCreateForm()
+    {
+        proyectoSeleccionado = new ProyectoModel(); // Limpiar el formulario
+        showForm = true;
+    }
+
+    private void EditProyecto(ProyectoModel proyecto)
+    {
+        proyectoSeleccionado = proyecto;
+        showForm = true;
+    }
+
+private async Task HandleSubmit()
+{
+    if (proyectoSeleccionado.id == 0) // Si no tiene un id, lo creamos
+    {
+        // Crear nuevo proyecto
+        await Http.PostAsJsonAsync("api/proyecto", proyectoSeleccionado);
+    }
+    else
+    {
+        // Actualizar proyecto existente
+        await Http.PutAsJsonAsync($"api/proyecto/{proyectoSeleccionado.id}", proyectoSeleccionado);
+    }
+
+    proyectos = await Http.GetFromJsonAsync<List<ProyectoModel>>("api/proyecto");
+    showForm = false;
+}
+
+
+    private async Task DeleteProyecto(int id)
+    {
+        await Http.DeleteAsync($"api/proyecto/{id}");
+        proyectos = await Http.GetFromJsonAsync<List<ProyectoModel>>("api/proyecto");
+    }
+
+    private void Cancelar()
+    {
+        showForm = false;
+    }
+}
